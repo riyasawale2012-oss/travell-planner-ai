@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Planner AI — Kimi AI Travel Integration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0 20px;
+            position: relative;
+        }
+
+        .user-nav {
+            position: absolute;
+            right: 0;
+            top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .user-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            border-color: rgba(255,255,255,0.7);
+        }
+
+        .badge-user {
+            color: #ffd700;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+            color: #ffffff;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #e0e0e0;
+            background: #ffffff;
+            color: #333;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 700px) {
+            .row, .row-3 {
+                grid-template-columns: 1fr;
+            }
+            .user-nav {
+                position: static;
+                justify-content: center;
+                margin-top: 15px;
+            }
+        }
+
+        button.btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        button.btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.45);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 25px;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .itinerary-day {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .itinerary-day h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.15rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .day-cost {
+            font-size: 0.9rem;
+            color: #2e7d32;
+            background: #e8f5e9;
+            padding: 2px 10px;
+            border-radius: 12px;
+            border: 1px solid #c8e6c9;
+        }
+
+        .activity {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 12px 0;
+            border-bottom: 1px solid #daeeff;
+        }
+
+        .activity:last-child {
+            border-bottom: none;
+        }
+
+        .activity-time {
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            min-width: 65px;
+            text-align: center;
+        }
+
+        .activity-details {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .activity-meta {
+            font-size: 0.85rem;
+            color: #546e7a;
+            display: flex;
+            gap: 12px;
+        }
+
+        .type-badge {
+            text-transform: capitalize;
+            color: #764ba2;
+            font-weight: 600;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .pill-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #f0f0f0;
+            border: none;
+            font-weight: 600;
+            color: #666;
+            flex: 1;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .trip-card {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .trip-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .trip-card h4 {
+            color: #667eea;
+            margin-bottom: 6px;
+        }
+
+        .trip-meta {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .section-box {
+            background: #f8f9ff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .section-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .budget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .budget-card {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .budget-card span {
+            display: block;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .budget-card strong {
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .packing-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 10px;
+        }
+
+        .packing-item {
+            background: white;
+            padding: 10px 14px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            border: 1px solid #e0e0e0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.2rem;
+            cursor: pointer;
+            width: auto;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="user-nav" id="userNav">
+                <span id="userStatus" class="badge-user">Guest Mode</span>
+                <button id="authBtn" class="user-nav-btn" onclick="openAuthModal()">🔑 Login / Register</button>
+            </div>
+            <h1>✈️ Kimi AI Travel Planner</h1>
+            <p>Smart, AI-powered itineraries and budget planning powered by FastAPI</p>
+        </header>
+
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('plan')">Plan Trip</button>
+                <button class="tab" onclick="switchTab('history')">My Trips</button>
+            </div>
+
+            <!-- Plan Trip Tab -->
+            <div id="plan-tab" class="tab-content active">
+                <div class="error" id="error"></div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="currentCity">Starting City (Departure)</label>
+                        <input type="text" id="currentCity" value="Mumbai" placeholder="e.g., Delhi, Mumbai, New York" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="destination">Destination City</label>
+                        <input type="text" id="destination" placeholder="e.g., Goa, Manali, Bali, Dubai, Paris" required>
+                    </div>
+                </div>
+
+                <div class="row-3">
+                    <div class="form-group">
+                        <label for="startDate">Start Date</label>
+                        <input type="date" id="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">End Date</label>
+                        <input type="date" id="endDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="isInternational">Trip Type</label>
+                        <select id="isInternational">
+                            <option value="false" selected>Domestic 🇮🇳</option>
+                            <option value="true">International ✈️</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row-3">
+                    <div class="form-group">
+                        <label for="budget">Total Budget (₹ / $)</label>
+                        <input type="number" id="budget" value="25000" min="1000" step="500">
+                    </div>
+                    <div class="form-group">
+                        <label for="travelers">Travelers</label>
+                        <input type="number" id="travelers" value="2" min="1" max="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="travelStyle">Travel Style</label>
+                        <select id="travelStyle">
+                            <option value="budget">Budget 🎒</option>
+                            <option value="moderate" selected>Moderate 🌟</option>
+                            <option value="luxury">Luxury ✨</option>
+                            <option value="backpacker">Backpacker 🧭</option>
+                            <option value="adventure">Adventure 🏞️</option>
+                            <option value="family">Family 👨‍👩‍👧</option>
+                            <option value="romantic">Romantic 💖</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="hotelCategory">Hotel Preference</label>
+                        <select id="hotelCategory">
+                            <option value="hostel">Hostel / Guesthouse</option>
+                            <option value="3-star" selected>3-Star Hotel</option>
+                            <option value="4-star">4-Star Hotel</option>
+                            <option value="5-star">5-Star Luxury Resort</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="transportMode">Preferred Transport</label>
+                        <select id="transportMode">
+                            <option value="flight" selected>Flight ✈️</option>
+                            <option value="train">Train 🚆</option>
+                            <option value="bus">Bus 🚌</option>
+                            <option value="car">Self Drive / Cab 🚗</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="interests">Interests & Custom Requests (Comma separated)</label>
+                    <textarea id="interests" placeholder="e.g., beaches, scuba diving, nightlife, historical temples, street food..."></textarea>
+                </div>
+
+                <button id="planBtn" class="btn-primary" onclick="planTrip()">
+                    ✨ Generate AI Itinerary & Budget
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p id="loadingMsg">Crafting your custom AI itinerary...</p>
+                </div>
+
+                <div class="result" id="result"></div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="history-tab" class="tab-content">
+                <div id="tripsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeAuthModal()">✕</button>
+            <h2 style="color: #38bdf8; margin-bottom: 20px;" id="authTitle">Login to TravelBudget AI</h2>
+            <div class="error" id="authError"></div>
+            <form id="authForm" onsubmit="handleAuthSubmit(event)">
+                <div class="form-group" id="nameGroup" style="display: none;">
+                    <label for="authName">Full Name</label>
+                    <input type="text" id="authName" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="authEmail">Email Address</label>
+                    <input type="email" id="authEmail" required placeholder="user@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="authPassword">Password</label>
+                    <input type="password" id="authPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary" id="authSubmitBtn" style="margin-top: 10px;">Login</button>
+            </form>
+            <div style="margin-top: 15px; text-align: center; font-size: 0.9rem; color: #94a3b8;">
+                <span id="authToggleText">Don't have an account?</span>
+                <a href="#" style="color: #38bdf8; font-weight: 600; margin-left: 5px;" onclick="toggleAuthMode(event)">Register</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin.includes('http') ? window.location.origin : 'http://127.0.0.1:8000';
+        let isRegisterMode = false;
+
+        // Set default dates
+        const today = new Date();
+        const nextWeek = new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000);
+        document.getElementById('startDate').value = today.toISOString().split('T')[0];
+        document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
+
+        // Check login status on page load
+        checkAuthStatus();
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem('access_token');
+            const userEmail = localStorage.getItem('user_email');
+            const statusEl = document.getElementById('userStatus');
+            const authBtn = document.getElementById('authBtn');
+
+            if (token) {
+                statusEl.textContent = userEmail ? `👤 ${userEmail}` : '👤 Authenticated';
+                authBtn.textContent = '🚪 Logout';
+                authBtn.onclick = logout;
+            } else {
+                statusEl.textContent = 'Guest Mode';
+                authBtn.textContent = '🔑 Login / Register';
+                authBtn.onclick = openAuthModal;
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+            if (tab === 'plan') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('plan-tab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('history-tab').classList.add('active');
+                loadTrips();
+            }
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error');
+            el.textContent = msg;
+            el.classList.add('active');
+            setTimeout(() => el.classList.remove('active'), 6000);
+        }
+
+        function showAuthError(msg) {
+            const el = document.getElementById('authError');
+            el.textContent = msg;
+            el.classList.add('active');
+            setTimeout(() => el.classList.remove('active'), 5000);
+        }
+
+        function openAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+        }
+
+        function toggleAuthMode(e) {
+            e.preventDefault();
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('authTitle').textContent = isRegisterMode ? 'Create an Account' : 'Login to TravelBudget AI';
+            document.getElementById('nameGroup').style.display = isRegisterMode ? 'block' : 'none';
+            document.getElementById('authSubmitBtn').textContent = isRegisterMode ? 'Register Account' : 'Login';
+            document.getElementById('authToggleText').textContent = isRegisterMode ? 'Already have an account?' : "Don't have an account?";
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const full_name = document.getElementById('authName').value.trim();
+
+            try {
+                if (isRegisterMode) {
+                    const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, full_name: full_name || email.split('@')[0] })
+                    });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.detail || 'Registration failed');
+                    }
+                    // Auto login after registration
+                }
+
+                const loginRes = await fetch(`${API_BASE}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!loginRes.ok) {
+                    const err = await loginRes.json();
+                    throw new Error(err.detail || 'Invalid login credentials');
+                }
+
+                const tokenData = await loginRes.json();
+                localStorage.setItem('access_token', tokenData.access_token);
+                localStorage.setItem('user_email', email);
+                checkAuthStatus();
+                closeAuthModal();
+            } catch (err) {
+                showAuthError(err.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_email');
+            checkAuthStatus();
+        }
+
+        async function planTrip() {
+            const currentCity = document.getElementById('currentCity').value.trim();
+            const destination = document.getElementById('destination').value.trim();
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const isInternational = document.getElementById('isInternational').value === 'true';
+            const budget = parseFloat(document.getElementById('budget').value);
+            const travelers = parseInt(document.getElementById('travelers').value);
+            const travelStyle = document.getElementById('travelStyle').value;
+            const hotelCategory = document.getElementById('hotelCategory').value;
+            const transportMode = document.getElementById('transportMode').value;
+            const rawInterests = document.getElementById('interests').value.trim();
+            const interests = rawInterests ? rawInterests.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            if (!destination || !startDate || !endDate || !budget) {
+                showError('Please fill in starting city, destination, dates, and budget');
+                return;
+            }
+
+            const btn = document.getElementById('planBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+
+            btn.disabled = true;
+            loading.classList.add('active');
+            result.classList.remove('active');
+
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch(`${API_BASE}/api/v1/ai/plan-trip`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        current_city: currentCity || "Mumbai",
+                        destination: destination,
+                        is_international: isInternational,
+                        start_date: startDate,
+                        end_date: endDate,
+                        budget: budget,
+                        num_travellers: travelers,
+                        travel_style: travelStyle,
+                        hotel_category: hotelCategory,
+                        transport_mode: transportMode,
+                        interests: interests
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Failed to generate itinerary');
+                }
+
+                const data = await response.json();
+                displayItinerary(data, { destination, startDate, endDate, travelers, travelStyle, budget });
+
+                // Save trip to local cache
+                saveTripToCache(data, destination, startDate, endDate);
+
+            } catch (err) {
+                showError(err.message || 'Error connecting to backend API');
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                loading.classList.remove('active');
+            }
+        }
+
+        function displayItinerary(data, meta) {
+            const result = document.getElementById('result');
+            const itin = data.itinerary || {};
+            const budgetRec = data.budget_recommendation || {};
+
+            let daysHtml = '';
+            if (itin.itinerary && Array.isArray(itin.itinerary)) {
+                daysHtml = itin.itinerary.map(day => `
+                    <div class="itinerary-day">
+                        <h3>
+                            <span>📅 Day ${day.day} — ${day.date}</span>
+                            <span class="day-cost">Est. ₹${day.daily_budget_estimate || 0}</span>
+                        </h3>
+                        ${(day.activities || []).map(act => `
+                            <div class="activity">
+                                <span class="activity-time">${act.time || 'Flex'}</span>
+                                <div class="activity-details">
+                                    <div class="activity-title">${act.name}</div>
+                                    <div class="activity-meta">
+                                        <span class="type-badge">${act.type || 'activity'}</span>
+                                        <span>Cost: ₹${act.estimated_cost || 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `).join('');
+            }
+
+            // Budget recommendation breakdown
+            let budgetHtml = '';
+            if (budgetRec.category_breakdown) {
+                budgetHtml = `
+                    <div class="section-box">
+                        <h3>💰 Budget Recommendation Breakdown</h3>
+                        <div class="budget-grid">
+                            <div class="budget-card">
+                                <span>Accommodation</span>
+                                <strong>₹${budgetRec.category_breakdown.accommodation || 0}</strong>
+                            </div>
+                            <div class="budget-card">
+                                <span>Transport</span>
+                                <strong>₹${budgetRec.category_breakdown.transport || 0}</strong>
+                            </div>
+                            <div class="budget-card">
+                                <span>Food & Dining</span>
+                                <strong>₹${budgetRec.category_breakdown.food || 0}</strong>
+                            </div>
+                            <div class="budget-card">
+                                <span>Activities & Sightseeing</span>
+                                <strong>₹${budgetRec.category_breakdown.activities || 0}</strong>
+                            </div>
+                            <div class="budget-card">
+                                <span>Emergency Buffer</span>
+                                <strong>₹${budgetRec.category_breakdown.miscellaneous || 0}</strong>
+                            </div>
+                        </div>
+                        <p style="color: #94a3b8; font-size: 0.9rem;">
+                            Suggested Daily Budget per person: <strong>₹${budgetRec.suggested_daily_per_person || 0}</strong>
+                        </p>
+                    </div>
+                `;
+            }
+
+            // Packing checklist
+            let packingHtml = '';
+            if (itin.packing_list && Array.isArray(itin.packing_list)) {
+                packingHtml = `
+                    <div class="section-box">
+                        <h3>🎒 Recommended Packing Checklist</h3>
+                        <div class="packing-list">
+                            ${itin.packing_list.map(item => `
+                                <div class="packing-item">
+                                    <input type="checkbox" id="item-${item.item}">
+                                    <label for="item-${item.item}" style="margin:0; font-weight: normal; cursor: pointer;">
+                                        ${item.item} ${item.quantity ? `(${item.quantity})` : ''}
+                                    </label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // AI Recommendations
+            let recsHtml = '';
+            if (itin.recommendations && Array.isArray(itin.recommendations)) {
+                recsHtml = `
+                    <div class="section-box">
+                        <h3>💡 Smart Travel Recommendations</h3>
+                        <ul style="padding-left: 20px; color: #cbd5e1; line-height: 1.6;">
+                            ${itin.recommendations.map(r => `<li>${r}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            result.innerHTML = `
+                <div style="border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 20px;">
+                    <h2 style="color: #38bdf8; font-size: 1.8rem; margin-bottom: 8px;">🗺️ ${itin.destination || meta.destination}</h2>
+                    <p style="color: #94a3b8;">
+                        ${meta.startDate} → ${meta.endDate} (${itin.duration_days || ''} Days) · ${meta.travelers} traveler(s)
+                    </p>
+                    <div style="margin-top: 10px;">
+                        <span class="pill-tag" style="background: #0284c7; color: white;">${meta.travelStyle}</span>
+                        <span class="pill-tag">Est Total: ₹${itin.estimated_total_cost || 0}</span>
+                    </div>
+                </div>
+
+                ${daysHtml || '<p style="color: #94a3b8;">No day-by-day activities returned.</p>'}
+                ${budgetHtml}
+                ${packingHtml}
+                ${recsHtml}
+            `;
+            result.classList.add('active');
+        }
+
+        function saveTripToCache(data, destination, startDate, endDate) {
+            let trips = JSON.parse(localStorage.getItem('cached_trips') || '[]');
+            trips.unshift({
+                destination,
+                start_date: startDate,
+                end_date: endDate,
+                data,
+                savedAt: new Date().toISOString()
+            });
+            localStorage.setItem('cached_trips', JSON.stringify(trips.slice(0, 15)));
+        }
+
+        async function loadTrips() {
+            const container = document.getElementById('tripsList');
+            const token = localStorage.getItem('access_token');
+
+            if (token) {
+                try {
+                    const res = await fetch(`${API_BASE}/api/v1/trips`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const tripData = await res.json();
+                        if (tripData.trips && tripData.trips.length > 0) {
+                            container.innerHTML = tripData.trips.map(trip => `
+                                <div class="trip-card">
+                                    <h4>🗺️ ${trip.destination}</h4>
+                                    <div class="trip-meta">
+                                        ${trip.start_date} → ${trip.end_date} · ${trip.travel_style} · ${trip.num_travellers} traveler(s)
+                                    </div>
+                                    <div style="margin-top: 6px; font-size: 0.85rem; color: #38bdf8;">Status: ${trip.status}</div>
+                                </div>
+                            `).join('');
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Error fetching backend trips:', e);
+                }
+            }
+
+            // Fallback to local cached trips
+            const cachedTrips = JSON.parse(localStorage.getItem('cached_trips') || '[]');
+            if (cachedTrips.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:60px; height:60px; opacity:0.3; margin-bottom:15px;">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <h3>No trips planned yet</h3>
+                        <p>Plan your first trip in the "Plan Trip" tab!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = cachedTrips.map((item, i) => `
+                <div class="trip-card" onclick="viewCachedTrip(${i})">
+                    <h4>🗺️ ${item.destination}</h4>
+                    <div class="trip-meta">
+                        ${item.start_date} → ${item.end_date} · Planned on ${new Date(item.savedAt).toLocaleDateString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewCachedTrip(idx) {
+            const cachedTrips = JSON.parse(localStorage.getItem('cached_trips') || '[]');
+            if (cachedTrips[idx]) {
+                switchTab('plan');
+                displayItinerary(cachedTrips[idx].data, {
+                    destination: cachedTrips[idx].destination,
+                    startDate: cachedTrips[idx].start_date,
+                    endDate: cachedTrips[idx].end_date,
+                    travelers: cachedTrips[idx].data.itinerary?.num_travellers || 2,
+                    travelStyle: cachedTrips[idx].data.itinerary?.travel_style || 'moderate'
+                });
+            }
+        }
+
+        // Test backend reachability
+        fetch(`${API_BASE}/health`)
+            .then(r => r.json())
+            .then(d => console.log('Backend connected ✅:', d))
+            .catch(() => console.warn('Backend not running at:', API_BASE));
+    </script>
+</body>
+</html>
